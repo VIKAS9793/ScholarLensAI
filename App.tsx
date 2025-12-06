@@ -182,6 +182,10 @@ function App() {
 
   const [writingMode, setWritingMode] = useState<'digital' | 'camera'>('digital');
 
+  // Focus Falls timer state (120 seconds = 2 minutes)
+  const [focusTimeRemaining, setFocusTimeRemaining] = useState(120);
+  const [focusTimerActive, setFocusTimerActive] = useState(false);
+
   // --- GOVERNANCE & COMPLIANCE STATE ---
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -230,6 +234,44 @@ function App() {
 
     return () => clearInterval(checkBreakTime);
   }, [currentStep, sessionStartTime, showBrainBreak]);
+
+  // Focus Falls timer countdown
+  useEffect(() => {
+    if (!focusTimerActive || focusTimeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setFocusTimeRemaining(prev => {
+        if (prev <= 1) {
+          setFocusTimerActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [focusTimerActive, focusTimeRemaining]);
+
+  // Reset focus timer when entering Focus Falls assessment - age-adaptive duration
+  useEffect(() => {
+    if (selectedAssessment === AssessmentType.ATTENTION && currentStep === 'assessment') {
+      // Age-adaptive timer: younger = shorter to protect eyes
+      // 5-6 years: 45 seconds, 7-8 years: 60 seconds, 9-10 years: 90 seconds, 11-12: 120 seconds
+      const age = activeProfile?.age || 8;
+      let duration: number;
+      if (age <= 6) {
+        duration = 45;  // 45 seconds for youngest
+      } else if (age <= 8) {
+        duration = 60;  // 1 minute for 7-8
+      } else if (age <= 10) {
+        duration = 90;  // 1.5 minutes for 9-10
+      } else {
+        duration = 120; // 2 minutes for 11+
+      }
+      setFocusTimeRemaining(duration);
+      setFocusTimerActive(false); // Ensure fresh start
+    }
+  }, [selectedAssessment, currentStep, activeProfile?.age]);
 
   // --- GOVERNANCE HANDLERS ---
   const handleAgeGateParent = () => {
@@ -877,6 +919,14 @@ function App() {
 
               {selectedAssessment === AssessmentType.ATTENTION && (
                 <div className="relative aspect-video bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden shadow-inner">
+                  {/* Timer Display */}
+                  <div className="absolute top-4 right-4 z-20 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${focusTimerActive ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
+                    <span className="text-white font-mono font-bold text-lg">
+                      {Math.floor(focusTimeRemaining / 60)}:{(focusTimeRemaining % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+
                   {/* Animated Focus Content - Interactive shapes for focus tracking */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative w-full h-full">
@@ -884,42 +934,68 @@ function App() {
                       <motion.div
                         className="absolute w-4 h-4 bg-yellow-300 rounded-full"
                         style={{ top: '20%', left: '30%' }}
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+                        animate={focusTimerActive ? { scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] } : {}}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
                       <motion.div
                         className="absolute w-3 h-3 bg-pink-300 rounded-full"
                         style={{ top: '60%', left: '70%' }}
-                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                        animate={focusTimerActive ? { scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] } : {}}
                         transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
                       />
                       <motion.div
                         className="absolute w-5 h-5 bg-green-300 rounded-full"
                         style={{ top: '40%', left: '50%' }}
-                        animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
+                        animate={focusTimerActive ? { scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] } : {}}
                         transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
                       />
-                      {/* Moving focus target */}
+                      {/* Moving focus target - only animates when timer active */}
                       <motion.div
                         className="absolute w-16 h-16 border-4 border-white rounded-full flex items-center justify-center"
-                        animate={{
+                        animate={focusTimerActive ? {
                           x: [0, 100, -100, 50, 0],
                           y: [0, -50, 50, -30, 0]
-                        }}
+                        } : {}}
                         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                         style={{ top: '40%', left: '40%' }}
                       >
                         <motion.div
                           className="w-8 h-8 bg-white rounded-full"
-                          animate={{ scale: [1, 0.8, 1] }}
+                          animate={focusTimerActive ? { scale: [1, 0.8, 1] } : {}}
                           transition={{ duration: 1, repeat: Infinity }}
                         />
                       </motion.div>
-                      {/* Instructions overlay */}
-                      <div className="absolute bottom-4 left-0 right-0 text-center">
-                        <p className="text-white/90 font-medium text-lg">Follow the moving circle with your eyes! 👀</p>
-                        <p className="text-white/60 text-sm mt-1">Keep watching - we're observing your focus patterns</p>
-                      </div>
+
+                      {/* Start button overlay - shown before timer starts */}
+                      {!focusTimerActive && focusTimeRemaining > 0 && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <button
+                            onClick={() => setFocusTimerActive(true)}
+                            className="bg-white text-purple-700 px-8 py-4 rounded-full font-bold text-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+                          >
+                            ▶ Start {focusTimeRemaining >= 60
+                              ? `${Math.floor(focusTimeRemaining / 60)}:${(focusTimeRemaining % 60).toString().padStart(2, '0')} min`
+                              : `${focusTimeRemaining}s`} Activity
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Timer complete overlay */}
+                      {focusTimeRemaining === 0 && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4">
+                          <div className="text-white text-4xl">✅</div>
+                          <p className="text-white font-bold text-xl">Time's Up!</p>
+                          <p className="text-white/80 text-sm">Now press Submit below to send your recording</p>
+                        </div>
+                      )}
+
+                      {/* Instructions overlay - shown during activity */}
+                      {focusTimerActive && (
+                        <div className="absolute bottom-4 left-0 right-0 text-center">
+                          <p className="text-white/90 font-medium text-lg">Follow the moving circle with your eyes! 👀</p>
+                          <p className="text-white/60 text-sm mt-1">Keep your camera recording</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

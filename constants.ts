@@ -225,12 +225,12 @@ export const ACTIVITY_INSTRUCTIONS: Record<AssessmentType, { title: string; step
   [AssessmentType.ATTENTION]: {
     title: "🎯 Watch & Wonder",
     steps: [
-      "1️⃣ Get comfy and watch the video",
-      "2️⃣ Look at whatever interests you on the screen",
-      "3️⃣ It's totally fine to look around or move!",
-      "4️⃣ Just watch until it's done"
+      "1️⃣ Press 'Start Camera' to begin recording",
+      "2️⃣ Watch the animated circle (time adapts to age)",
+      "3️⃣ Follow the moving dot with your eyes",
+      "4️⃣ When timer ends, press 'Submit' to save"
     ],
-    tip: "💡 Everyone pays attention differently - that's what makes us unique! 🦋",
+    tip: "💡 Duration is set based on age (45s-2min) to protect young eyes! 👁️",
     parentNote: "⚠️ This activity observes engagement patterns - NOT attention capacity or focus ability."
   }
 };
