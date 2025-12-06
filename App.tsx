@@ -26,7 +26,8 @@ import {
   Home,
   Camera,
   Edit3,
-  ChevronRight
+  ChevronRight,
+  Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -78,6 +79,7 @@ const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss
 
   return (
     <motion.div
+      id="assessment-result"
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 max-h-[90vh] overflow-y-auto"
@@ -155,8 +157,20 @@ const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss
         </div>
       </div>
 
-      <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-md bg-white/80">
-        <Button variant="outline" onClick={() => window.print()}>Print Report</Button>
+      <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-md bg-white/80 no-print">
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            #assessment-result, #assessment-result * { visibility: visible; }
+            #assessment-result { position: fixed; left: 0; top: 0; width: 100%; height: auto; margin: 0; padding: 0; border: none; shadow: none; overflow: visible; }
+            .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          }
+        `}</style>
+        <Button variant="outline" onClick={() => window.print()}>
+          <Printer className="w-5 h-5 mr-2" />
+          Print Report
+        </Button>
         {/* M0-13: Clarified button purpose */}
         <Button onClick={onDismiss}>✓ Return to Dashboard</Button>
       </div>
