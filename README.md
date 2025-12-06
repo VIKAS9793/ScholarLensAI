@@ -9,6 +9,7 @@
 [![Made with Gemini](https://img.shields.io/badge/Made%20with-Gemini%203%20Pro-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Track](https://img.shields.io/badge/Track-Education-green?style=for-the-badge)](https://kaggle.com/competitions/gemini-3)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![Try Now](https://img.shields.io/badge/🚀%20Try%20Now-Live%20Demo-FF6B6B?style=for-the-badge)](https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna?fullscreenApplet=true)
 
 ---
 
@@ -33,7 +34,7 @@ ScholarLens AI is a **child-friendly educational observation platform** that use
 
 ## 🎮 Demo
 
-**Live App**: [View in AI Studio](https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna)
+**Live App**: [🚀 Try ScholarLens AI Now!](https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna?fullscreenApplet=true)
 
 ### Screenshots
 
