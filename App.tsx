@@ -15,7 +15,7 @@ import { PrivacyPolicyModal, TermsOfServiceModal, ScreeningDisclaimer } from './
 import { analyzeAssessment } from './services/geminiService';
 import { storage } from './services/storage';
 import { AssessmentType, ChildProfile, AssessmentResult, ConfidenceLevel, Achievement } from './types';
-import { APP_NAME, SAMPLE_TEXTS, MATH_PROBLEMS, ACHIEVEMENTS, QUESTS, AGE_RANGES } from './constants';
+import { APP_NAME, SAMPLE_TEXTS, MATH_PROBLEMS, ACHIEVEMENTS, QUESTS, AGE_RANGES, ACTIVITY_INSTRUCTIONS } from './constants';
 import { sounds } from './services/sound';
 import {
   BookOpen,
@@ -739,23 +739,65 @@ function App() {
 
     return (
       <div className={`min-h-screen ${getTheme()} relative overflow-hidden pb-12`}>
-        {/* Thematic Header */}
-        <header className="px-6 py-6 flex justify-between items-center relative z-20">
-          <button onClick={() => setCurrentStep('dashboard')} className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform text-gray-500">
-            <Home size={24} />
-          </button>
-          <h2 className="font-display text-3xl font-bold text-gray-800">{quest?.title}</h2>
-          <div className="w-12 h-12" /> {/* Spacer */}
+        {/* Thematic Header with Back and Home Buttons */}
+        <header className="px-6 py-4 flex justify-between items-center relative z-20 bg-white/50 backdrop-blur-sm border-b border-white/30">
+          <div className="flex items-center gap-2">
+            {/* Back to Dashboard */}
+            <button
+              onClick={() => setCurrentStep('dashboard')}
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-lg hover:scale-105 transition-transform text-gray-600 font-medium border border-gray-200"
+            >
+              <ChevronRight size={18} className="rotate-180" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            {/* Home to Landing */}
+            <button
+              onClick={() => setCurrentStep('landing')}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-medium"
+            >
+              <Home size={18} />
+              <span className="hidden sm:inline">Home</span>
+            </button>
+          </div>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-800">{quest?.title}</h2>
+          <div className="w-24" /> {/* Spacer */}
         </header>
+
+        {/* Activity Instructions Banner */}
+        {selectedAssessment && ACTIVITY_INSTRUCTIONS[selectedAssessment] && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-6 mt-4 bg-white rounded-2xl shadow-md border border-gray-100 p-4 relative z-20"
+          >
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-gray-800 mb-2">
+                  {ACTIVITY_INSTRUCTIONS[selectedAssessment].title}
+                </h3>
+                <ul className="space-y-1 text-sm text-gray-600">
+                  {ACTIVITY_INSTRUCTIONS[selectedAssessment].steps.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="sm:w-64 bg-primary-50 rounded-xl p-3 flex items-center">
+                <p className="text-sm text-primary-700 font-medium">
+                  {ACTIVITY_INSTRUCTIONS[selectedAssessment].tip}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Character Guide */}
         <motion.div
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="absolute top-24 left-6 z-10 hidden lg:block"
+          className="absolute top-40 left-6 z-10 hidden lg:block"
         >
           <div className="flex flex-col items-center">
-            <Character id={characterId} mood="encouraging" size={180} />
+            <Character id={characterId} mood="encouraging" size={150} />
             <SpeechBubble
               message={selectedAssessment === AssessmentType.READING ? "Read loud and clear!" : "You've got this!"}
               position="left"
@@ -763,7 +805,7 @@ function App() {
           </div>
         </motion.div>
 
-        <div className="max-w-5xl mx-auto px-6 relative z-10 pt-8">
+        <div className="max-w-5xl mx-auto px-6 relative z-10 pt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Content/Instructions Card */}
             <div className="bg-white rounded-[2rem] p-8 shadow-float border-4 border-white/50 relative overflow-hidden">
