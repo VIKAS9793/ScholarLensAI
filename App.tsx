@@ -763,12 +763,12 @@ function App() {
           <div className="w-24" /> {/* Spacer */}
         </header>
 
-        {/* Activity Instructions Banner */}
+        {/* Activity Instructions Banner - positioned to avoid character overlap */}
         {selectedAssessment && ACTIVITY_INSTRUCTIONS[selectedAssessment] && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-6 mt-4 bg-white rounded-2xl shadow-md border border-gray-100 p-4 relative z-20"
+            className="mx-6 lg:ml-48 mt-4 bg-white rounded-2xl shadow-md border border-gray-100 p-4 relative z-20"
           >
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
@@ -781,7 +781,7 @@ function App() {
                   ))}
                 </ul>
               </div>
-              <div className="sm:w-64 bg-primary-50 rounded-xl p-3 flex items-center">
+              <div className="sm:w-56 bg-primary-50 rounded-xl p-3 flex items-center">
                 <p className="text-sm text-primary-700 font-medium">
                   {ACTIVITY_INSTRUCTIONS[selectedAssessment].tip}
                 </p>
@@ -790,14 +790,14 @@ function App() {
           </motion.div>
         )}
 
-        {/* Character Guide */}
+        {/* Character Guide - positioned below header */}
         <motion.div
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="absolute top-40 left-6 z-10 hidden lg:block"
+          className="fixed top-28 left-4 z-30 hidden lg:block"
         >
-          <div className="flex flex-col items-center">
-            <Character id={characterId} mood="encouraging" size={150} />
+          <div className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
+            <Character id={characterId} mood="encouraging" size={100} />
             <SpeechBubble
               message={selectedAssessment === AssessmentType.READING ? "Read loud and clear!" : "You've got this!"}
               position="left"
