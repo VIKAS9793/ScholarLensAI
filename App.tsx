@@ -496,11 +496,11 @@ function App() {
           </div>
 
           <h1 className="font-display text-5xl md:text-7xl font-bold text-contrast-hero-text drop-shadow-sm mb-6">
-            Early Detection,<br /> Brighter Futures
+            Every Child Learns<br /> Differently
           </h1>
           <p className="font-story text-xl text-gray-700 mb-10 max-w-2xl mx-auto leading-relaxed font-bold">
             Join Buddy and friends on a magical learning adventure!
-            We help parents understand how their children learn best.
+            Discover how your child engages with learning — no tests, no labels.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">

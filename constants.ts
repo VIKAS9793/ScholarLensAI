@@ -3,10 +3,10 @@ import { AssessmentType, CharacterId } from "./types";
 export const APP_NAME = "ScholarLens AI";
 
 export const DISCLAIMER_TEXT = `
-⚠️ IMPORTANT SAFETY NOTICE
-ScholarLens AI is a SCREENING tool, NOT a diagnostic instrument.
-This app does NOT diagnose learning disabilities.
-Always consult with qualified professionals.
+⚠️ IMPORTANT NOTICE
+ScholarLens AI observes how children engage with learning activities.
+This is NOT a test, assessment, or diagnostic tool.
+Always consult qualified professionals for evaluations.
 `;
 
 export const AGE_RANGES = {
@@ -45,9 +45,9 @@ export const TUTORIAL_STEPS = [
     icon: "🔒"
   },
   {
-    title: "Screening Only",
-    desc: "We help identify signs, but only a doctor can give a diagnosis. We're here to help you start the journey.",
-    icon: "⚠️"
+    title: "Observations Only",
+    desc: "We observe engagement patterns — no tests, no labels. Share insights with educators if you'd like.",
+    icon: "💡"
   }
 ];
 

@@ -1,6 +1,6 @@
 {
   "name": "ScholarLens AI",
-  "description": "An early learning disability screening tool using multimodal AI analysis. Privacy-first, screening-only.",
+  "description": "An educational observation tool helping parents understand how children engage with learning. Privacy-first, child-friendly.",
   "requestFramePermissions": [
     "camera",
     "microphone"
