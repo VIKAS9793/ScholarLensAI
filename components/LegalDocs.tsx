@@ -86,7 +86,7 @@ privacy@scholarlens.ai
 ScholarLens AI Privacy Team
 [Address to be added]
 
-Last updated: December 2024`
+Last updated: December 2025`
         }
     ];
 
@@ -227,7 +227,7 @@ export const TermsOfServiceModal: React.FC<LegalDocModalProps> = ({ onClose }) =
                         <p>These terms are governed by the laws of [Jurisdiction]. Disputes shall be resolved through binding arbitration.</p>
                     </section>
 
-                    <p className="text-gray-500 italic">Last updated: December 2024</p>
+                    <p className="text-gray-500 italic">Last updated: December 2025</p>
                 </div>
 
                 <div className="p-4 bg-gray-50 border-t">

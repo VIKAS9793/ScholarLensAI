@@ -530,13 +530,13 @@ function App() {
       <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-200 py-6 px-6 relative z-10">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-500">
-            © 2024 ScholarLens AI. All rights reserved.
+            © 2025 ScholarLens AI. All rights reserved.
           </div>
           <nav className="flex gap-6 text-sm">
-            <a href="#privacy" className="text-gray-600 hover:text-primary-600 transition-colors">Privacy Policy</a>
-            <a href="#terms" className="text-gray-600 hover:text-primary-600 transition-colors">Terms of Use</a>
-            <a href="#contact" className="text-gray-600 hover:text-primary-600 transition-colors">Contact Support</a>
-            <a href="#about" className="text-gray-600 hover:text-primary-600 transition-colors">About Us</a>
+            <button onClick={() => setShowPrivacyPolicy(true)} className="text-gray-600 hover:text-primary-600 transition-colors">Privacy Policy</button>
+            <button onClick={() => setShowTermsOfService(true)} className="text-gray-600 hover:text-primary-600 transition-colors">Terms of Use</button>
+            <a href="mailto:support@scholarlens.ai" className="text-gray-600 hover:text-primary-600 transition-colors">Contact Support</a>
+            <button onClick={() => setShowPrivacyPolicy(true)} className="text-gray-600 hover:text-primary-600 transition-colors">About Us</button>
           </nav>
         </div>
         <div className="max-w-4xl mx-auto mt-4 pt-4 border-t border-gray-100">
