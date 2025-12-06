@@ -535,7 +535,7 @@ function App() {
           <nav className="flex gap-6 text-sm">
             <button onClick={() => setShowPrivacyPolicy(true)} className="text-gray-600 hover:text-primary-600 transition-colors">Privacy Policy</button>
             <button onClick={() => setShowTermsOfService(true)} className="text-gray-600 hover:text-primary-600 transition-colors">Terms of Use</button>
-            <a href="mailto:support@scholarlens.ai" className="text-gray-600 hover:text-primary-600 transition-colors">Contact Support</a>
+            <a href="mailto:vikassahani17@gmail.com" className="text-gray-600 hover:text-primary-600 transition-colors">Contact Support</a>
             <button onClick={() => setShowPrivacyPolicy(true)} className="text-gray-600 hover:text-primary-600 transition-colors">About Us</button>
           </nav>
         </div>
@@ -632,7 +632,7 @@ function App() {
             <span>•</span>
             <button onClick={() => setShowTermsOfService(true)} className="hover:text-primary-600 underline">Terms of Service</button>
             <span>•</span>
-            <a href="mailto:support@scholarlens.ai" className="hover:text-primary-600 underline">Contact Support</a>
+            <a href="mailto:vikassahani17@gmail.com" className="hover:text-primary-600 underline">Contact Support</a>
           </div>
         </div>
       );
