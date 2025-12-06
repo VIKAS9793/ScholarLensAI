@@ -35,6 +35,8 @@ ScholarLens AI is a **child-friendly educational observation platform** that use
 
 ## 🎮 Demo
 
+**📺 Watch the Video**: [Walkthrough on YouTube](https://youtu.be/kYPdJDGTfLQ)
+
 **Live App**: [🚀 Try ScholarLens AI Now!](https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna?fullscreenApplet=true)
 
 ### Screenshots
