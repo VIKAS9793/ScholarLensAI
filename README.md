@@ -163,9 +163,20 @@ Built with ❤️ for the Gemini 3 Pro Hackathon
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting PRs.
+
+Key requirements:
+- Follow our ethical guidelines (no labeling language)
+- Ensure child safety and privacy compliance
+- Test in AI Studio before submitting
+
+---
+
 ## 📄 License
 
-MIT License - See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
