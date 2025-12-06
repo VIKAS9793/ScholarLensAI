@@ -104,7 +104,7 @@ ScholarLensAI/
 
 This contains everything you need to run your app locally.
 
-**View your app in AI Studio**: https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna
+**View your app in AI Studio**: https://ai.studio/apps/drive/1GYiBMwDrO0ixlw74TZmH5VniViQ9eQna?fullscreenApplet=true
 
 ### Run Locally
 
