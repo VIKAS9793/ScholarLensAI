@@ -1,0 +1,8 @@
+{
+  "name": "ScholarLens AI",
+  "description": "An early learning disability screening tool using multimodal AI analysis. Privacy-first, screening-only.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
