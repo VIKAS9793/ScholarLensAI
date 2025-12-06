@@ -985,7 +985,7 @@ function App() {
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4">
                           <div className="text-white text-4xl">✅</div>
                           <p className="text-white font-bold text-xl">Time's Up!</p>
-                          <p className="text-white/80 text-sm">Now press Submit below to send your recording</p>
+                          <p className="text-white/80 text-sm">Stop recording (🔴) to auto-send to AI</p>
                         </div>
                       )}
 

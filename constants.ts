@@ -195,7 +195,7 @@ export const ACTIVITY_INSTRUCTIONS: Record<AssessmentType, { title: string; step
       "1️⃣ Look at the fun story on the left",
       "2️⃣ Press 'Start Camera' when you're ready",
       "3️⃣ Read the story out loud - just have fun with it!",
-      "4️⃣ Press 'Done' whenever you're finished"
+      "4️⃣ Stop recording when done - it auto-sends to AI!"
     ],
     tip: "💡 There's no right or wrong way to read! Just enjoy the story 📚",
     parentNote: "⚠️ This activity observes reading engagement patterns - NOT reading ability or level."
@@ -228,7 +228,7 @@ export const ACTIVITY_INSTRUCTIONS: Record<AssessmentType, { title: string; step
       "1️⃣ Press 'Start Camera' to begin recording",
       "2️⃣ Watch the animated circle (time adapts to age)",
       "3️⃣ Follow the moving dot with your eyes",
-      "4️⃣ When timer ends, press 'Submit' to save"
+      "4️⃣ When timer ends, stop recording to auto-send"
     ],
     tip: "💡 Duration is set based on age (45s-2min) to protect young eyes! 👁️",
     parentNote: "⚠️ This activity observes engagement patterns - NOT attention capacity or focus ability."
