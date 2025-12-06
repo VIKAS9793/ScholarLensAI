@@ -31,6 +31,26 @@
                 green: '#34D399',
                 purple: '#C084FC',
                 orange: '#FBBF24',
+              },
+              // Semantic colors for UI states (P0 accessibility compliance)
+              semantic: {
+                error: '#EF4444',
+                'error-light': '#FEE2E2',
+                'error-dark': '#991B1B',
+                warning: '#F59E0B',
+                'warning-light': '#FEF3C7',
+                'warning-dark': '#92400E',
+                success: '#10B981',
+                'success-light': '#D1FAE5',
+                'success-dark': '#065F46',
+                info: '#3B82F6',
+                'info-light': '#DBEAFE',
+                'info-dark': '#1E40AF',
+              },
+              // WCAG AA compliant contrast colors
+              contrast: {
+                'dark-on-light': '#166534',
+                'hero-text': '#1E3A8A',
               }
             },
             fontFamily: {
@@ -39,10 +59,30 @@
               story: ['Quicksand', 'sans-serif'],
               sans: ['Fredoka', 'system-ui', 'sans-serif'],
             },
+            fontSize: {
+              'child-readable': ['24px', { lineHeight: '1.8' }],
+              'child-large': ['28px', { lineHeight: '1.6' }],
+            },
             boxShadow: {
               float: '0 8px 24px rgba(99, 102, 241, 0.15)',
               hover: '0 12px 32px rgba(99, 102, 241, 0.25)',
               pressed: '0 4px 12px rgba(99, 102, 241, 0.2)',
+              'focus-ring': '0 0 0 3px rgba(139, 92, 246, 0.5)',
+            },
+            spacing: {
+              '18': '4.5rem',
+              '22': '5.5rem',
+            },
+            borderRadius: {
+              '2xl': '1rem',
+              '3xl': '1.5rem',
+              '4xl': '2rem',
+            },
+            minHeight: {
+              'touch': '44px',
+            },
+            minWidth: {
+              'touch': '44px',
             }
           }
         }

@@ -9,14 +9,17 @@ import { AchievementNotification, BrainBreak } from './components/Gamification';
 import { SkillsRadar } from './components/Visualizations';
 import { Character } from './components/Characters';
 import { MagicButton, QuestCard, SpeechBubble, MountainProgress } from './components/MagicalUI';
+// Compliance & Governance Components
+import { ConsentModal, AgeGateModal, ChildBlockedScreen, ActivityDisclaimerModal, DataManagementPanel } from './components/Compliance';
+import { PrivacyPolicyModal, TermsOfServiceModal, ScreeningDisclaimer } from './components/LegalDocs';
 import { analyzeAssessment } from './services/geminiService';
 import { storage } from './services/storage';
 import { AssessmentType, ChildProfile, AssessmentResult, ConfidenceLevel, Achievement } from './types';
 import { APP_NAME, SAMPLE_TEXTS, MATH_PROBLEMS, ACHIEVEMENTS, QUESTS, AGE_RANGES } from './constants';
 import { sounds } from './services/sound';
-import { 
-  BookOpen, 
-  Activity, 
+import {
+  BookOpen,
+  Activity,
   Calendar,
   Lock,
   Sparkles,
@@ -30,13 +33,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 // --- SUB-COMPONENTS ---
 
 const LoadingScreen = () => (
-  <motion.div 
+  <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     className="fixed inset-0 bg-gradient-to-br from-magical-purple to-magical-pink z-50 flex flex-col items-center justify-center p-4"
   >
-    <motion.div 
+    <motion.div
       animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
       transition={{ duration: 2, repeat: Infinity }}
       className="mb-8"
@@ -45,30 +48,36 @@ const LoadingScreen = () => (
     </motion.div>
     <h2 className="font-display text-4xl font-bold text-white mb-4 text-shadow-magical">Preparing Adventure...</h2>
     <div className="flex gap-2">
-       {[0, 1, 2].map(i => (
-         <motion.div 
-           key={i}
-           className="w-4 h-4 bg-white rounded-full"
-           animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-           transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-         />
-       ))}
+      {[0, 1, 2].map(i => (
+        <motion.div
+          key={i}
+          className="w-4 h-4 bg-white rounded-full"
+          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+        />
+      ))}
     </div>
   </motion.div>
 );
 
 const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss: () => void }) => {
-  const confidenceColor = 
-    result.overallConfidence === ConfidenceLevel.HIGH ? 'bg-green-100 text-green-800 border-green-200' :
-    result.overallConfidence === ConfidenceLevel.MEDIUM ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-    'bg-red-100 text-red-800 border-red-200';
+  // P0-15: Changed LOW from alarming red to softer amber/warning with context
+  const confidenceColor =
+    result.overallConfidence === ConfidenceLevel.HIGH ? 'bg-semantic-success-light text-semantic-success-dark border-semantic-success' :
+      result.overallConfidence === ConfidenceLevel.MEDIUM ? 'bg-semantic-info-light text-semantic-info-dark border-semantic-info' :
+        'bg-semantic-warning-light text-semantic-warning-dark border-semantic-warning'; // Changed from alarming red to warning amber
+
+  const confidenceTooltip =
+    result.overallConfidence === ConfidenceLevel.HIGH ? 'High confidence - AI detected clear, analyzable content' :
+      result.overallConfidence === ConfidenceLevel.MEDIUM ? 'Medium confidence - Some aspects may need re-assessment' :
+        'Low confidence - Assessment may not be accurate. Consider re-recording with clearer audio/video.';
 
   useEffect(() => {
     sounds.playSuccess();
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 max-h-[90vh] overflow-y-auto"
@@ -78,11 +87,16 @@ const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss
           <h3 className="text-2xl font-bold text-gray-900 capitalize">{result.type} Report</h3>
           <p className="text-sm text-gray-500">{new Date(result.timestamp).toLocaleDateString()} • Powered by Gemini 3 Pro</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${confidenceColor}`}>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-bold border cursor-help ${confidenceColor}`}
+          title={confidenceTooltip}
+          aria-label={`${result.overallConfidence} confidence. ${confidenceTooltip}`}
+        >
+          {result.overallConfidence === ConfidenceLevel.LOW && '⚠️ '}
           {result.overallConfidence} CONFIDENCE
         </span>
       </div>
-      
+
       <div className="p-6 space-y-8">
         {result.skillDimensions && (
           <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -99,30 +113,29 @@ const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss
 
         {result.actionPlan && result.actionPlan.length > 0 && (
           <div>
-             <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center">
-               <Calendar className="w-5 h-5 mr-2 text-primary-600" /> Recommended Action Plan
-             </h4>
-             <div className="grid gap-3">
-               {result.actionPlan.map((item, idx) => (
-                 <div key={idx} className="flex items-start bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                   <div className={`mt-1 w-2 h-2 rounded-full mr-3 flex-shrink-0 ${
-                     item.priority === 'immediate' ? 'bg-red-500' : 
-                     item.priority === 'short-term' ? 'bg-yellow-500' : 'bg-green-500'
-                   }`} />
-                   <div>
-                     <p className="font-semibold text-gray-800">{item.action}</p>
-                     <div className="flex gap-2 mt-2">
-                       <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                         {item.priority}
-                       </span>
-                       <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                         {item.type}
-                       </span>
-                     </div>
-                   </div>
-                 </div>
-               ))}
-             </div>
+            <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-primary-600" /> Recommended Action Plan
+            </h4>
+            <div className="grid gap-3">
+              {result.actionPlan.map((item, idx) => (
+                <div key={idx} className="flex items-start bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <div className={`mt-1 w-2 h-2 rounded-full mr-3 flex-shrink-0 ${item.priority === 'immediate' ? 'bg-red-500' :
+                    item.priority === 'short-term' ? 'bg-yellow-500' : 'bg-green-500'
+                    }`} />
+                  <div>
+                    <p className="font-semibold text-gray-800">{item.action}</p>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                        {item.priority}
+                      </span>
+                      <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                        {item.type}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -141,14 +154,16 @@ const ResultCard = ({ result, onDismiss }: { result: AssessmentResult, onDismiss
           </ul>
         </div>
       </div>
-      
+
       <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-md bg-white/80">
         <Button variant="outline" onClick={() => window.print()}>Print Report</Button>
-        <Button onClick={onDismiss}>Done</Button>
+        {/* M0-13: Clarified button purpose */}
+        <Button onClick={onDismiss}>✓ Return to Dashboard</Button>
       </div>
     </motion.div>
   );
 };
+
 
 // --- MAIN APP ---
 
@@ -160,22 +175,134 @@ function App() {
   const [profiles, setProfiles] = useState<ChildProfile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastResult, setLastResult] = useState<AssessmentResult | null>(null);
-  
+
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [showBrainBreak, setShowBrainBreak] = useState(false);
-  
+
   const [writingMode, setWritingMode] = useState<'digital' | 'camera'>('digital');
+
+  // --- GOVERNANCE & COMPLIANCE STATE ---
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [showChildBlocked, setShowChildBlocked] = useState(false);
+  const [showActivityDisclaimer, setShowActivityDisclaimer] = useState(false);
+  const [pendingAssessment, setPendingAssessment] = useState<AssessmentType | null>(null);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
+  const [hasConsented, setHasConsented] = useState<boolean>(() => {
+    const consent = localStorage.getItem('scholarLens_consent');
+    return consent ? JSON.parse(consent).accepted : false;
+  });
+  const [hasPassedAgeGate, setHasPassedAgeGate] = useState<boolean>(() => {
+    return localStorage.getItem('scholarLens_ageGate') === 'passed';
+  });
+
+  // M0-5: Session timer for brain break reminders
+  const [sessionStartTime] = useState<number>(Date.now());
+  const BRAIN_BREAK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
   useEffect(() => {
     const loadedProfiles = storage.getProfiles();
     setProfiles(loadedProfiles);
-    
+
     // Auto-load profile if it exists to prevent blank screens on refresh
     if (loadedProfiles.length > 0 && !activeProfile) {
       setActiveProfile(loadedProfiles[0]);
     }
+
+    // Show age gate if not passed
+    if (!hasPassedAgeGate && currentStep === 'landing') {
+      setShowAgeGate(true);
+    }
   }, []);
+
+  // M0-5: Brain break timer - show reminder every 10 minutes of activity
+  useEffect(() => {
+    if (currentStep !== 'dashboard' && currentStep !== 'assessment') return;
+
+    const checkBreakTime = setInterval(() => {
+      const elapsed = Date.now() - sessionStartTime;
+      if (elapsed > 0 && elapsed % BRAIN_BREAK_INTERVAL_MS < 1000 && !showBrainBreak) {
+        setShowBrainBreak(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(checkBreakTime);
+  }, [currentStep, sessionStartTime, showBrainBreak]);
+
+  // --- GOVERNANCE HANDLERS ---
+  const handleAgeGateParent = () => {
+    localStorage.setItem('scholarLens_ageGate', 'passed');
+    setHasPassedAgeGate(true);
+    setShowAgeGate(false);
+  };
+
+  const handleAgeGateChild = () => {
+    setShowAgeGate(false);
+    setShowChildBlocked(true);
+  };
+
+  const handleConsentAccept = () => {
+    localStorage.setItem('scholarLens_consent', JSON.stringify({
+      accepted: true,
+      timestamp: new Date().toISOString(),
+      version: '1.0'
+    }));
+    setHasConsented(true);
+    setShowConsentModal(false);
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentModal(false);
+    setCurrentStep('landing');
+  };
+
+  const handleActivityDisclaimerAccept = () => {
+    setShowActivityDisclaimer(false);
+    if (pendingAssessment) {
+      setSelectedAssessment(pendingAssessment);
+      setCurrentStep('assessment');
+      setPendingAssessment(null);
+    }
+  };
+
+  const handleExportData = () => {
+    const data = {
+      profiles: storage.getProfiles(),
+      results: activeProfile ? storage.getResults(activeProfile.id) : [],
+      exportedAt: new Date().toISOString(),
+      version: '1.0'
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scholarlens_data_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAllData = () => {
+    storage.clearData();
+    localStorage.removeItem('scholarLens_consent');
+    localStorage.removeItem('scholarLens_ageGate');
+    setActiveProfile(null);
+    setProfiles([]);
+    setHasConsented(false);
+    setCurrentStep('landing');
+    alert('All data has been permanently deleted.');
+  };
+
+  // Modified startAssessment to show activity disclaimer
+  const startAssessmentWithDisclaimer = (type: AssessmentType) => {
+    if (!hasConsented) {
+      setShowConsentModal(true);
+      return;
+    }
+    setPendingAssessment(type);
+    setShowActivityDisclaimer(true);
+  };
 
   const handleCreateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,16 +345,16 @@ function App() {
 
     const achievement = ACHIEVEMENTS.find(a => a.id === id);
     if (achievement) {
-      const updatedProfile = { 
-        ...activeProfile, 
+      const updatedProfile = {
+        ...activeProfile,
         achievements: [...activeProfile.achievements, id],
-        xp: activeProfile.xp + 50 
+        xp: activeProfile.xp + 50
       };
-      
+
       setActiveProfile(updatedProfile);
       const allProfiles = storage.getProfiles().map(p => p.id === updatedProfile.id ? updatedProfile : p);
       localStorage.setItem('scholarLens_profiles', JSON.stringify(allProfiles));
-      
+
       setShowAchievement(achievement);
       setTimeout(() => setShowAchievement(null), 5000);
     }
@@ -243,7 +370,7 @@ function App() {
 
   const processAssessment = async (file: File | Blob) => {
     if (!activeProfile || !selectedAssessment) return;
-    
+
     setIsProcessing(true);
     try {
       const reader = new FileReader();
@@ -256,12 +383,12 @@ function App() {
         // Safe problem selection
         let mathProblem = MATH_PROBLEMS["K-1"];
         if (activeProfile.grade === '2' || activeProfile.grade === '3') mathProblem = MATH_PROBLEMS["2-3"];
-        else if (['4','5','6'].includes(activeProfile.grade)) mathProblem = MATH_PROBLEMS["4-6"];
+        else if (['4', '5', '6'].includes(activeProfile.grade)) mathProblem = MATH_PROBLEMS["4-6"];
 
         const context = {
           age: activeProfile.age,
           grade: activeProfile.grade,
-          extra: selectedAssessment === AssessmentType.MATH 
+          extra: selectedAssessment === AssessmentType.MATH
             ? `Problem: ${mathProblem}`
             : undefined
         };
@@ -291,19 +418,19 @@ function App() {
         const xpGain = 100;
         const newXp = activeProfile.xp + xpGain;
         const newLevel = Math.floor(newXp / 100) + 1;
-        
+
         // Check for level up
         if (newLevel > activeProfile.level) {
-            sounds.playLevelUp();
+          sounds.playLevelUp();
         }
-        
+
         // Update Stars
         const newStars = { ...activeProfile.stars };
         newStars[selectedAssessment] = Math.min(3, newStars[selectedAssessment] + 1);
 
         const updatedProfile = { ...activeProfile, xp: newXp, level: newLevel, stars: newStars };
         setActiveProfile(updatedProfile);
-        
+
         const allProfiles = storage.getProfiles().map(p => p.id === updatedProfile.id ? updatedProfile : p);
         localStorage.setItem('scholarLens_profiles', JSON.stringify(allProfiles));
 
@@ -350,27 +477,33 @@ function App() {
           Login
         </MagicButton>
       </header>
-      
+
       <main className="flex-1 flex flex-col items-center justify-center px-4 text-center max-w-4xl mx-auto pb-20 relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           <div className="flex justify-center gap-4 mb-8">
-            <Character id="buddy" mood="happy" size={100} />
-            <Character id="pixel" mood="happy" size={100} />
+            <div className="text-center">
+              <Character id="buddy" mood="happy" size={100} />
+              <span className="text-sm font-medium text-gray-700">Buddy</span>
+            </div>
+            <div className="text-center">
+              <Character id="pixel" mood="happy" size={100} />
+              <span className="text-sm font-medium text-gray-700">Pixel</span>
+            </div>
           </div>
-          
-          <h1 className="font-display text-5xl md:text-7xl font-bold text-white text-shadow-magical mb-6">
-            Early Detection,<br/> Brighter Futures
+
+          <h1 className="font-display text-5xl md:text-7xl font-bold text-contrast-hero-text drop-shadow-sm mb-6">
+            Early Detection,<br /> Brighter Futures
           </h1>
           <p className="font-story text-xl text-gray-700 mb-10 max-w-2xl mx-auto leading-relaxed font-bold">
             Join Buddy and friends on a magical learning adventure!
             We help parents understand how their children learn best.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto justify-center">
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
             <MagicButton onClick={() => {
               const savedProfiles = storage.getProfiles();
               if (savedProfiles.length > 0) {
@@ -382,9 +515,37 @@ function App() {
             }}>
               Start Adventure <ChevronRight className="ml-2 w-6 h-6" />
             </MagicButton>
+            {/* H0-1: Secondary CTA */}
+            <MagicButton
+              variant="white"
+              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+            >
+              Learn More
+            </MagicButton>
           </div>
         </motion.div>
       </main>
+
+      {/* H0-2: Footer with legal links */}
+      <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-200 py-6 px-6 relative z-10">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-sm text-gray-500">
+            © 2024 ScholarLens AI. All rights reserved.
+          </div>
+          <nav className="flex gap-6 text-sm">
+            <a href="#privacy" className="text-gray-600 hover:text-primary-600 transition-colors">Privacy Policy</a>
+            <a href="#terms" className="text-gray-600 hover:text-primary-600 transition-colors">Terms of Use</a>
+            <a href="#contact" className="text-gray-600 hover:text-primary-600 transition-colors">Contact Support</a>
+            <a href="#about" className="text-gray-600 hover:text-primary-600 transition-colors">About Us</a>
+          </nav>
+        </div>
+        <div className="max-w-4xl mx-auto mt-4 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-400 text-center">
+            ScholarLens AI is a screening tool only and does not diagnose any medical conditions.
+            Always consult qualified healthcare professionals for proper evaluation.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 
@@ -392,70 +553,88 @@ function App() {
     if (viewMode === 'parent') {
       // PRO MODE (Parent)
       return (
-         <div className="max-w-6xl mx-auto px-6 py-8">
-            <header className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
-               <div>
-                 <h1 className="text-2xl font-bold text-gray-900">ScholarLens Dashboard</h1>
-                 <p className="text-gray-500">Professional Mode</p>
-               </div>
-               <div className="flex items-center gap-4">
-                  <div className="text-sm bg-gray-100 px-3 py-1 rounded-full">{activeProfile?.name} ({activeProfile?.age}y)</div>
-                  <Button variant="outline" size="sm" onClick={() => setActiveProfile(null)}>Switch Profile</Button>
-               </div>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                 <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Assessments</h3>
-                 <p className="text-3xl font-bold text-gray-900">{storage.getResults(activeProfile?.id || '').length}</p>
-               </div>
-               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                 <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Level</h3>
-                 <p className="text-3xl font-bold text-gray-900">{activeProfile?.level}</p>
-               </div>
-               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                 <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Achievements</h3>
-                 <p className="text-3xl font-bold text-gray-900">{activeProfile?.achievements.length}</p>
-               </div>
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <header className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">ScholarLens Dashboard</h1>
+              <p className="text-gray-500">Professional Mode</p>
             </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <h3 className="font-bold text-gray-900">History</h3>
-               </div>
-               {storage.getResults(activeProfile?.id || '').length === 0 ? (
-                 <div className="p-8 text-center text-gray-500">No data available. Switch to Kid Mode to complete assessments.</div>
-               ) : (
-                 <table className="w-full">
-                   <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-                     <tr>
-                       <th className="px-6 py-3 text-left">Date</th>
-                       <th className="px-6 py-3 text-left">Type</th>
-                       <th className="px-6 py-3 text-left">Confidence</th>
-                       <th className="px-6 py-3 text-right">Actions</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-gray-200">
-                     {storage.getResults(activeProfile?.id || '').map(res => (
-                       <tr key={res.id}>
-                         <td className="px-6 py-4 text-sm text-gray-900">{new Date(res.timestamp).toLocaleDateString()}</td>
-                         <td className="px-6 py-4 text-sm text-gray-900 capitalize">{res.type}</td>
-                         <td className="px-6 py-4 text-sm">
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                              res.overallConfidence === 'HIGH' ? 'bg-green-100 text-green-800' :
-                              res.overallConfidence === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                            }`}>{res.overallConfidence}</span>
-                         </td>
-                         <td className="px-6 py-4 text-right">
-                            <Button variant="outline" size="sm" onClick={() => { setLastResult(res); setCurrentStep('results'); }}>View</Button>
-                         </td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               )}
+            <div className="flex items-center gap-4">
+              <div className="text-sm bg-gray-100 px-3 py-1 rounded-full">{activeProfile?.name} ({activeProfile?.age}y)</div>
+              <Button variant="outline" size="sm" onClick={() => setActiveProfile(null)}>Switch Profile</Button>
             </div>
-         </div>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Assessments</h3>
+              <p className="text-3xl font-bold text-gray-900">{storage.getResults(activeProfile?.id || '').length}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Level</h3>
+              <p className="text-3xl font-bold text-gray-900">{activeProfile?.level}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Achievements</h3>
+              <p className="text-3xl font-bold text-gray-900">{activeProfile?.achievements.length}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-bold text-gray-900">History</h3>
+            </div>
+            {storage.getResults(activeProfile?.id || '').length === 0 ? (
+              <div className="p-8 text-center text-gray-500">No data available. Switch to Kid Mode to complete assessments.</div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Date</th>
+                    <th className="px-6 py-3 text-left">Type</th>
+                    <th className="px-6 py-3 text-left">Confidence</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {storage.getResults(activeProfile?.id || '').map(res => (
+                    <tr key={res.id}>
+                      <td className="px-6 py-4 text-sm text-gray-900">{new Date(res.timestamp).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900 capitalize">{res.type}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${res.overallConfidence === 'HIGH' ? 'bg-green-100 text-green-800' :
+                          res.overallConfidence === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                          }`}>{res.overallConfidence}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button variant="outline" size="sm" onClick={() => { setLastResult(res); setCurrentStep('results'); }}>View</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Data Management Panel (GDPR/DPDP Compliance) */}
+          <div className="mt-8">
+            <DataManagementPanel
+              profileName={activeProfile?.name || 'Child'}
+              assessmentCount={storage.getResults(activeProfile?.id || '').length}
+              onExport={handleExportData}
+              onDelete={handleDeleteAllData}
+            />
+          </div>
+
+          {/* Legal Links Footer */}
+          <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500 space-x-4">
+            <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-primary-600 underline">Privacy Policy</button>
+            <span>•</span>
+            <button onClick={() => setShowTermsOfService(true)} className="hover:text-primary-600 underline">Terms of Service</button>
+            <span>•</span>
+            <a href="mailto:support@scholarlens.ai" className="hover:text-primary-600 underline">Contact Support</a>
+          </div>
+        </div>
       );
     }
 
@@ -468,48 +647,61 @@ function App() {
 
         {/* Castle Illustration (Abstract SVG) */}
         <div className="absolute bottom-0 left-0 right-0 h-64 opacity-80 pointer-events-none">
-           <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-full">
-              <path fill="#86EFAC" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-           </svg>
-           {/* Simple Castle Silhouette */}
-           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-9xl">🏰</div>
+          <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-full">
+            <path fill="#86EFAC" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+          </svg>
+          {/* Simple Castle Silhouette */}
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-9xl">🏰</div>
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-           <motion.div 
-             initial={{ y: -50, opacity: 0 }}
-             animate={{ y: 0, opacity: 1 }}
-             className="flex flex-col items-center justify-center mb-12"
-           >
-              <div className="flex items-end gap-4 mb-6">
-                 <Character id="buddy" mood="happy" size={150} />
-                 <SpeechBubble message={`Welcome back, ${activeProfile?.name}! Ready for an adventure?`} />
-              </div>
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="flex flex-col items-center justify-center mb-12"
+          >
+            <div className="flex items-end gap-4 mb-6">
+              <Character id="buddy" mood="happy" size={150} />
+              <SpeechBubble message={`Welcome back, ${activeProfile?.name}! Ready for an adventure?`} />
+            </div>
 
-              {/* Level Badge */}
-              <motion.div 
+            {/* H0-3: Improved Level Badge positioning with stars count */}
+            <div className="flex items-center gap-8">
+              <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="relative w-32 h-32 bg-yellow-400 rounded-full flex items-center justify-center border-8 border-yellow-200 shadow-xl"
+                className="relative w-28 h-28 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center border-6 border-yellow-200 shadow-xl"
               >
-                 <div className="text-5xl font-display font-bold text-yellow-800">{activeProfile?.level}</div>
-                 <div className="absolute -bottom-4 bg-magical-purple text-white px-3 py-1 rounded-full font-bold text-sm shadow-lg">LEVEL</div>
-                 {/* Rotating sparkles */}
-                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: 'linear' }} className="absolute inset-0 border-4 border-dashed border-white rounded-full"></motion.div>
+                <div className="text-4xl font-display font-bold text-yellow-800">{activeProfile?.level}</div>
+                <div className="absolute -bottom-3 bg-magical-purple text-white px-3 py-1 rounded-full font-bold text-xs shadow-lg">LEVEL</div>
+                {/* Rotating sparkles */}
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: 'linear' }} className="absolute inset-0 border-4 border-dashed border-white/50 rounded-full"></motion.div>
               </motion.div>
-           </motion.div>
 
-           {/* Quest Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-              {QUESTS.map((quest) => (
-                <QuestCard 
-                  key={quest.id}
-                  {...quest}
-                  color={quest.color as 'green' | 'purple' | 'orange' | 'yellow'}
-                  stars={activeProfile?.stars[quest.id as AssessmentType] || 0}
-                  onClick={() => startAssessment(quest.id as AssessmentType)}
-                />
-              ))}
-           </div>
+              {/* Total stars earned */}
+              <div className="text-center">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-3xl">⭐</span>
+                  <span className="font-display text-4xl font-bold text-yellow-600">
+                    {Object.values(activeProfile?.stars || {}).reduce((a: number, b: number) => a + b, 0)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">Total Stars</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Quest Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+            {QUESTS.map((quest) => (
+              <QuestCard
+                key={quest.id}
+                {...quest}
+                color={quest.color as 'green' | 'purple' | 'orange' | 'yellow'}
+                stars={activeProfile?.stars[quest.id as AssessmentType] || 0}
+                onClick={() => startAssessmentWithDisclaimer(quest.id as AssessmentType)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -522,13 +714,13 @@ function App() {
 
     // Thematic Backgrounds
     const getTheme = () => {
-       switch(selectedAssessment) {
-          case AssessmentType.READING: return "bg-gradient-to-br from-green-50 via-teal-50 to-white"; // Forest
-          case AssessmentType.WRITING: return "bg-gradient-to-br from-purple-50 via-pink-50 to-white"; // Art Studio
-          case AssessmentType.MATH: return "bg-gradient-to-br from-orange-50 via-yellow-50 to-white"; // Mountain
-          case AssessmentType.ATTENTION: return "bg-gradient-to-br from-blue-50 via-sky-50 to-white"; // Falls
-          default: return "bg-white";
-       }
+      switch (selectedAssessment) {
+        case AssessmentType.READING: return "bg-gradient-to-br from-green-50 via-teal-50 to-white"; // Forest
+        case AssessmentType.WRITING: return "bg-gradient-to-br from-purple-50 via-pink-50 to-white"; // Art Studio
+        case AssessmentType.MATH: return "bg-gradient-to-br from-orange-50 via-yellow-50 to-white"; // Mountain
+        case AssessmentType.ATTENTION: return "bg-gradient-to-br from-blue-50 via-sky-50 to-white"; // Falls
+        default: return "bg-white";
+      }
     };
 
     const getTextForReading = () => {
@@ -549,119 +741,134 @@ function App() {
       <div className={`min-h-screen ${getTheme()} relative overflow-hidden pb-12`}>
         {/* Thematic Header */}
         <header className="px-6 py-6 flex justify-between items-center relative z-20">
-           <button onClick={() => setCurrentStep('dashboard')} className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform text-gray-500">
-              <Home size={24} />
-           </button>
-           <h2 className="font-display text-3xl font-bold text-gray-800">{quest?.title}</h2>
-           <div className="w-12 h-12" /> {/* Spacer */}
+          <button onClick={() => setCurrentStep('dashboard')} className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform text-gray-500">
+            <Home size={24} />
+          </button>
+          <h2 className="font-display text-3xl font-bold text-gray-800">{quest?.title}</h2>
+          <div className="w-12 h-12" /> {/* Spacer */}
         </header>
 
         {/* Character Guide */}
-        <motion.div 
-           initial={{ x: -100, opacity: 0 }}
-           animate={{ x: 0, opacity: 1 }}
-           className="absolute top-24 left-6 z-10 hidden lg:block"
+        <motion.div
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="absolute top-24 left-6 z-10 hidden lg:block"
         >
-           <div className="flex flex-col items-center">
-             <Character id={characterId} mood="encouraging" size={180} />
-             <SpeechBubble 
-                message={selectedAssessment === AssessmentType.READING ? "Read loud and clear!" : "You've got this!"} 
-                position="left" 
-             />
-           </div>
+          <div className="flex flex-col items-center">
+            <Character id={characterId} mood="encouraging" size={180} />
+            <SpeechBubble
+              message={selectedAssessment === AssessmentType.READING ? "Read loud and clear!" : "You've got this!"}
+              position="left"
+            />
+          </div>
         </motion.div>
 
         <div className="max-w-5xl mx-auto px-6 relative z-10 pt-8">
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-             {/* Content/Instructions Card */}
-             <div className="bg-white rounded-[2rem] p-8 shadow-float border-4 border-white/50 relative overflow-hidden">
-                {selectedAssessment === AssessmentType.READING && (
-                  <div className="text-center">
-                     <h3 className="font-story font-bold text-xl text-green-600 mb-6 uppercase tracking-widest">Story Time</h3>
-                     <p className="font-body text-2xl leading-loose text-gray-800">{getTextForReading()}</p>
-                  </div>
-                )}
-                
-                {selectedAssessment === AssessmentType.WRITING && (
-                  <div>
-                    <div className="flex justify-between items-center mb-6">
-                       <h3 className="font-display text-2xl text-purple-600">Your Mission</h3>
-                       {writingMode === 'digital' ? (
-                          <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">Digital Mode</div>
-                       ) : (
-                          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">Camera Mode</div>
-                       )}
-                    </div>
-                    
-                    <div className="bg-purple-50 p-6 rounded-2xl border-2 border-dashed border-purple-200 mb-8 text-center">
-                       <p className="font-story text-2xl text-purple-900">"The quick brown fox jumps over the lazy dog."</p>
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Content/Instructions Card */}
+            <div className="bg-white rounded-[2rem] p-8 shadow-float border-4 border-white/50 relative overflow-hidden">
+              {selectedAssessment === AssessmentType.READING && (
+                <div className="text-center">
+                  <h3 className="font-story font-bold text-xl text-green-600 mb-6 uppercase tracking-widest">Story Time</h3>
+                  {/* P0-14: Larger text for young readers */}
+                  <p className="font-body text-child-readable leading-loose text-gray-800" style={{ fontSize: '24px', lineHeight: '1.8' }}>{getTextForReading()}</p>
+                  <p className="text-sm text-gray-500 mt-4 italic">Read this story out loud clearly!</p>
+                </div>
+              )}
 
-                    <div className="flex gap-2 justify-center">
-                       <button 
-                         onClick={() => setWritingMode('digital')}
-                         className={`p-4 rounded-2xl flex-1 flex flex-col items-center gap-2 transition-all ${writingMode === 'digital' ? 'bg-purple-500 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-500'}`}
-                       >
-                         <Edit3 size={24} />
-                         <span className="font-bold text-sm">Draw Here</span>
-                       </button>
-                       <button 
-                         onClick={() => setWritingMode('camera')}
-                         className={`p-4 rounded-2xl flex-1 flex flex-col items-center gap-2 transition-all ${writingMode === 'camera' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-500'}`}
-                       >
-                         <Camera size={24} />
-                         <span className="font-bold text-sm">Use Camera</span>
-                       </button>
-                    </div>
+              {selectedAssessment === AssessmentType.WRITING && (
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-display text-2xl text-purple-600">Your Mission</h3>
+                    {writingMode === 'digital' ? (
+                      <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">Digital Mode</div>
+                    ) : (
+                      <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">Camera Mode</div>
+                    )}
                   </div>
-                )}
 
-                {selectedAssessment === AssessmentType.MATH && (
-                  <div className="text-center">
-                     <h3 className="font-display text-2xl text-orange-600 mb-8">Solve This Puzzle</h3>
-                     <div className="bg-orange-50 p-8 rounded-3xl border-4 border-orange-200 mb-6">
-                        <p className="font-mono text-4xl text-gray-900">{getMathProblem()}</p>
-                     </div>
-                     <MountainProgress current={1} total={5} />
+                  <div className="bg-purple-50 p-6 rounded-2xl border-2 border-dashed border-purple-200 mb-8 text-center">
+                    <p className="font-story text-2xl text-purple-900">"The quick brown fox jumps over the lazy dog."</p>
                   </div>
-                )}
 
-                {selectedAssessment === AssessmentType.ATTENTION && (
-                  <div className="relative aspect-video bg-black rounded-2xl overflow-hidden group cursor-pointer shadow-inner">
-                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                        <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/50">
-                           <div className="ml-2 w-0 h-0 border-t-[15px] border-t-transparent border-l-[30px] border-l-white border-b-[15px] border-b-transparent"></div>
-                        </div>
-                     </div>
-                     <p className="absolute bottom-4 left-0 right-0 text-center text-white/80 font-medium">Educational Video (2 min)</p>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => setWritingMode('digital')}
+                      className={`p-4 rounded-2xl flex-1 flex flex-col items-center gap-2 transition-all ${writingMode === 'digital' ? 'bg-purple-500 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      <Edit3 size={24} />
+                      <span className="font-bold text-sm">Draw Here</span>
+                    </button>
+                    <button
+                      onClick={() => setWritingMode('camera')}
+                      className={`p-4 rounded-2xl flex-1 flex flex-col items-center gap-2 transition-all ${writingMode === 'camera' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      <Camera size={24} />
+                      <span className="font-bold text-sm">Use Camera</span>
+                    </button>
                   </div>
-                )}
-             </div>
+                </div>
+              )}
 
-             {/* Capture Card */}
-             <div className="bg-white rounded-[2rem] p-4 shadow-float border-4 border-white/50 flex flex-col">
-                {selectedAssessment === AssessmentType.WRITING && writingMode === 'digital' ? (
-                   <div className="flex-1 rounded-2xl overflow-hidden border-2 border-gray-100">
-                      <LiveHandwritingAnalysis onCapture={processAssessment} />
-                   </div>
-                ) : (
-                   <div className="flex-1 rounded-2xl overflow-hidden bg-gray-900 relative">
-                      <MediaCapture 
-                        mode={selectedAssessment === AssessmentType.WRITING ? 'image' : 'video'}
-                        maxDuration={selectedAssessment === AssessmentType.ATTENTION ? 120 : 60}
-                        onCapture={processAssessment}
-                        instruction={`Record ${activeProfile.name}!`}
-                        allowUpload={selectedAssessment === AssessmentType.WRITING}
+              {selectedAssessment === AssessmentType.MATH && (
+                <div className="text-center">
+                  <h3 className="font-display text-2xl text-orange-600 mb-8">Solve This Puzzle</h3>
+                  <div className="bg-orange-50 p-8 rounded-3xl border-4 border-orange-200 mb-6">
+                    <p className="font-mono text-4xl text-gray-900 mb-6">{getMathProblem()}</p>
+                    {/* P0-13: Answer input field */}
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                      <label htmlFor="math-answer" className="text-lg font-medium text-gray-700">Your Answer:</label>
+                      <input
+                        type="number"
+                        id="math-answer"
+                        className="w-24 h-14 text-3xl text-center font-bold border-4 border-orange-400 rounded-xl bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                        placeholder="?"
+                        min="0"
+                        max="999"
+                        aria-label="Enter your answer"
                       />
-                      {/* Decorative Frame Elements */}
-                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl opacity-50 m-4 pointer-events-none"></div>
-                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl opacity-50 m-4 pointer-events-none"></div>
-                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl opacity-50 m-4 pointer-events-none"></div>
-                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl opacity-50 m-4 pointer-events-none"></div>
-                   </div>
-                )}
-             </div>
-           </div>
+                    </div>
+                  </div>
+                  <MountainProgress current={1} total={5} />
+                </div>
+              )}
+
+              {selectedAssessment === AssessmentType.ATTENTION && (
+                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden group cursor-pointer shadow-inner">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/50">
+                      <div className="ml-2 w-0 h-0 border-t-[15px] border-t-transparent border-l-[30px] border-l-white border-b-[15px] border-b-transparent"></div>
+                    </div>
+                  </div>
+                  <p className="absolute bottom-4 left-0 right-0 text-center text-white/80 font-medium">Educational Video (2 min)</p>
+                </div>
+              )}
+            </div>
+
+            {/* Capture Card */}
+            <div className="bg-white rounded-[2rem] p-4 shadow-float border-4 border-white/50 flex flex-col">
+              {selectedAssessment === AssessmentType.WRITING && writingMode === 'digital' ? (
+                <div className="flex-1 rounded-2xl overflow-hidden border-2 border-gray-100">
+                  <LiveHandwritingAnalysis onCapture={processAssessment} />
+                </div>
+              ) : (
+                <div className="flex-1 rounded-2xl overflow-hidden bg-gray-900 relative">
+                  <MediaCapture
+                    mode={selectedAssessment === AssessmentType.WRITING ? 'image' : 'video'}
+                    maxDuration={selectedAssessment === AssessmentType.ATTENTION ? 120 : 60}
+                    onCapture={processAssessment}
+                    instruction={`Record ${activeProfile.name}!`}
+                    allowUpload={selectedAssessment === AssessmentType.WRITING}
+                  />
+                  {/* Decorative Frame Elements */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl opacity-50 m-4 pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl opacity-50 m-4 pointer-events-none"></div>
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl opacity-50 m-4 pointer-events-none"></div>
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl opacity-50 m-4 pointer-events-none"></div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -673,91 +880,158 @@ function App() {
     <>
       <DisclaimerBanner />
       <AchievementNotification achievement={showAchievement} onDismiss={() => setShowAchievement(null)} />
-      
+
       <AnimatePresence>
         {isProcessing && <LoadingScreen />}
         {showTutorial && <Tutorial onComplete={finishTutorial} />}
         {showBrainBreak && <BrainBreak onComplete={() => setShowBrainBreak(false)} />}
-      </AnimatePresence>
-      
-      {currentStep === 'landing' && renderLanding()}
-      
-      {currentStep !== 'landing' && (
-         <>
-           {/* Mode Toggle (Fixed Bottom Right) */}
-           {currentStep === 'dashboard' && (
-              <button
-                onClick={() => setViewMode(viewMode === 'kid' ? 'parent' : 'kid')}
-                className="fixed bottom-6 right-6 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 border-4 border-gray-100"
-                aria-label={`Switch to ${viewMode === 'kid' ? 'parent' : 'kid'} mode`}
-              >
-                {viewMode === 'kid' ? (
-                  <Lock size={24} className="text-gray-400" />
-                ) : (
-                  <Sparkles size={24} className="text-magical-purple" />
-                )}
-              </button>
-           )}
 
-           <main>
-             {currentStep === 'onboarding' && (
-                <div className="max-w-xl mx-auto px-4 py-10">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">Create Profile</h2>
-                  <form onSubmit={handleCreateProfile} className="space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        {/* Governance & Compliance Modals */}
+        {showAgeGate && (
+          <AgeGateModal
+            onParentTeacher={handleAgeGateParent}
+            onChild={handleAgeGateChild}
+          />
+        )}
+        {showChildBlocked && <ChildBlockedScreen />}
+        {showConsentModal && (
+          <ConsentModal
+            onAccept={handleConsentAccept}
+            onDecline={handleConsentDecline}
+          />
+        )}
+        {showActivityDisclaimer && pendingAssessment && (
+          <ActivityDisclaimerModal
+            activityName={QUESTS.find(q => q.id === pendingAssessment)?.title || 'Activity'}
+            onAccept={handleActivityDisclaimerAccept}
+            onCancel={() => { setShowActivityDisclaimer(false); setPendingAssessment(null); }}
+          />
+        )}
+        {showPrivacyPolicy && <PrivacyPolicyModal onClose={() => setShowPrivacyPolicy(false)} />}
+        {showTermsOfService && <TermsOfServiceModal onClose={() => setShowTermsOfService(false)} />}
+      </AnimatePresence>
+
+      {currentStep === 'landing' && renderLanding()}
+
+      {currentStep !== 'landing' && (
+        <>
+          {/* Mode Toggle (Fixed Bottom Right) */}
+          {currentStep === 'dashboard' && (
+            <button
+              onClick={() => setViewMode(viewMode === 'kid' ? 'parent' : 'kid')}
+              className="fixed bottom-6 right-6 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 border-4 border-gray-100"
+              aria-label={`Switch to ${viewMode === 'kid' ? 'parent' : 'kid'} mode`}
+            >
+              {viewMode === 'kid' ? (
+                <Lock size={24} className="text-gray-400" />
+              ) : (
+                <Sparkles size={24} className="text-magical-purple" />
+              )}
+            </button>
+          )}
+
+          <main>
+            {currentStep === 'onboarding' && (
+              <div className="max-w-xl mx-auto px-4 py-10">
+                <h2 className="text-3xl font-bold text-gray-900 mb-6">Create Profile</h2>
+                <form onSubmit={handleCreateProfile} className="space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                  <p className="text-xs text-gray-500 mb-4"><span className="text-semantic-error font-bold">*</span> Required fields</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Child's Name <span className="text-semantic-error font-bold" aria-label="required">*</span>
+                    </label>
+                    <input
+                      required
+                      name="name"
+                      type="text"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors"
+                      placeholder="e.g. Alex"
+                      aria-required="true"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Child's Name</label>
-                      <input required name="name" type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="e.g. Alex" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                        <select name="age" className="w-full px-4 py-2 border rounded-lg">
-                          {Array.from({ length: AGE_RANGES.max - AGE_RANGES.min + 1 }, (_, i) => AGE_RANGES.min + i).map(age => (
-                            <option key={age} value={age}>{age}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                        <select name="grade" className="w-full px-4 py-2 border rounded-lg">{['K', '1', '2', '3', '4', '5', '6'].map(g => <option key={g} value={g}>{g}</option>)}</select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                      <select name="language" className="w-full px-4 py-2 border rounded-lg"><option value="English">English</option><option value="Spanish">Spanish</option></select>
-                    </div>
-                    <div className="bg-yellow-50 p-4 rounded-lg text-sm text-yellow-800">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" required className="mt-1" />
-                        <span>I acknowledge this is a screening tool only, NOT a diagnosis.</span>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Age <span className="text-semantic-error font-bold" aria-label="required">*</span>
                       </label>
+                      <select
+                        name="age"
+                        required
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                        aria-required="true"
+                      >
+                        {Array.from({ length: AGE_RANGES.max - AGE_RANGES.min + 1 }, (_, i) => AGE_RANGES.min + i).map(age => (
+                          <option key={age} value={age}>{age}</option>
+                        ))}
+                      </select>
                     </div>
-                    <Button type="submit" className="w-full">Start Adventure</Button>
-                  </form>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Grade <span className="text-semantic-error font-bold" aria-label="required">*</span>
+                      </label>
+                      <select
+                        name="grade"
+                        required
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                        aria-required="true"
+                      >
+                        {['K', '1', '2', '3', '4', '5', '6'].map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                    <select
+                      name="language"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                    >
+                      <option value="English">English</option>
+                      <option value="Spanish">Spanish</option>
+                    </select>
+                  </div>
+                  {/* P0-5: Critical acknowledgment styling */}
+                  <div className="bg-semantic-error-light p-4 rounded-lg border-2 border-semantic-error">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        required
+                        className="mt-1 w-5 h-5 rounded border-2 border-semantic-error text-semantic-error focus:ring-semantic-error cursor-pointer"
+                        aria-required="true"
+                        aria-describedby="acknowledgment-text"
+                      />
+                      <span id="acknowledgment-text" className="text-sm text-semantic-error-dark font-medium">
+                        <strong className="block mb-1">I acknowledge this is a SCREENING TOOL ONLY, NOT a diagnosis.</strong>
+                        Results must be reviewed by qualified healthcare professionals before any conclusions are drawn.
+                      </span>
+                    </label>
+                  </div>
+                  <Button type="submit" className="w-full">Start Adventure</Button>
+                </form>
+              </div>
+            )}
+            {currentStep === 'dashboard' && renderDashboard()}
+            {currentStep === 'assessment' && renderAssessment()}
+          </main>
+
+          <AnimatePresence>
+            {currentStep === 'results' && lastResult && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm"
+              >
+                <div className="max-w-2xl w-full my-8">
+                  <ResultCard result={lastResult} onDismiss={() => setCurrentStep('dashboard')} />
                 </div>
-             )}
-             {currentStep === 'dashboard' && renderDashboard()}
-             {currentStep === 'assessment' && renderAssessment()}
-           </main>
-           
-           <AnimatePresence>
-             {currentStep === 'results' && lastResult && (
-               <motion.div 
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 exit={{ opacity: 0 }}
-                 className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm"
-               >
-                 <div className="max-w-2xl w-full my-8">
-                   <ResultCard result={lastResult} onDismiss={() => setCurrentStep('dashboard')} />
-                 </div>
-               </motion.div>
-             )}
-           </AnimatePresence>
-         </>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
       )}
     </>
   );
 }
 
 export default App;
+
