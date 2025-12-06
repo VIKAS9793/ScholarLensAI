@@ -876,13 +876,52 @@ function App() {
               )}
 
               {selectedAssessment === AssessmentType.ATTENTION && (
-                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden group cursor-pointer shadow-inner">
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/50">
-                      <div className="ml-2 w-0 h-0 border-t-[15px] border-t-transparent border-l-[30px] border-l-white border-b-[15px] border-b-transparent"></div>
+                <div className="relative aspect-video bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden shadow-inner">
+                  {/* Animated Focus Content - Interactive shapes for focus tracking */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative w-full h-full">
+                      {/* Animated background stars */}
+                      <motion.div
+                        className="absolute w-4 h-4 bg-yellow-300 rounded-full"
+                        style={{ top: '20%', left: '30%' }}
+                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                      <motion.div
+                        className="absolute w-3 h-3 bg-pink-300 rounded-full"
+                        style={{ top: '60%', left: '70%' }}
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+                      />
+                      <motion.div
+                        className="absolute w-5 h-5 bg-green-300 rounded-full"
+                        style={{ top: '40%', left: '50%' }}
+                        animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
+                      />
+                      {/* Moving focus target */}
+                      <motion.div
+                        className="absolute w-16 h-16 border-4 border-white rounded-full flex items-center justify-center"
+                        animate={{
+                          x: [0, 100, -100, 50, 0],
+                          y: [0, -50, 50, -30, 0]
+                        }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ top: '40%', left: '40%' }}
+                      >
+                        <motion.div
+                          className="w-8 h-8 bg-white rounded-full"
+                          animate={{ scale: [1, 0.8, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        />
+                      </motion.div>
+                      {/* Instructions overlay */}
+                      <div className="absolute bottom-4 left-0 right-0 text-center">
+                        <p className="text-white/90 font-medium text-lg">Follow the moving circle with your eyes! 👀</p>
+                        <p className="text-white/60 text-sm mt-1">Keep watching - we're observing your focus patterns</p>
+                      </div>
                     </div>
                   </div>
-                  <p className="absolute bottom-4 left-0 right-0 text-center text-white/80 font-medium">Educational Video (2 min)</p>
                 </div>
               )}
             </div>
