@@ -518,7 +518,7 @@ function App() {
             {/* H0-1: Secondary CTA */}
             <MagicButton
               variant="white"
-              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+              onClick={() => setShowTermsOfService(true)}
             >
               Learn More
             </MagicButton>
